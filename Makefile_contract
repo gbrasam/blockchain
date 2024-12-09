@@ -1,0 +1,60 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Makefile_contract                                  :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By:                                            +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2024/12/08 09:28:41   			       #+#    #+#             */
+/*   Updated: 2024/12/09 14:55:10         			   ###   ########.fr      */
+/*                                                                            */
+/* ************************************************************************** */
+
+NAME            			= contract.wasm
+
+SRC_FILES					= set_score \
+				  			  get_score \
+							  rank_users \
+							  sort_users \
+							  utils \
+							  main \
+
+SRC_DIR						= srcs/
+OBJ_DIR						= objs/
+INCLUDE_DIR					= include/
+
+STACK_SIZE					= 1024
+
+CC              			= clang
+CFLAGS          			= -Wall -Werror -Wextra -I$(INCLUDE_DIR)
+LD							= wasm-ld
+LDFLAGS						= -O2 --no-entry --stack-first -z stack-size=$(STACK_SIZE)
+RM              			= rm -f
+
+SRC							= $(addprefix $(SRC_DIR), $(addsuffix .c, $(SRC_FILES)))
+OBJ							= $(addprefix $(OBJ_DIR), $(addsuffix .o, $(SRC_FILES)))
+
+all:            			$(NAME)
+
+$(OBJ_DIR)%.o: 				$(SRC_DIR)%.c
+							@mkdir -p $(OBJ_DIR)
+							@$(CC) $(CFLAGS) -o $@ -c $^
+
+contract_unstripped.wasm:	$(OBJECTS)
+							@$(LD) $(OBJECTS) $(LDFLAGS) -o $@
+
+$(NAME): 					contract_unstripped.wasm
+							@wasm-strip -o $@ $<
+
+play:						all
+							@npm run play
+
+frontend:					all
+							@npm run frontend
+
+fclean:         			clean
+							@$(RM) $(NAME) contract_unstripped.wasm
+
+re:             			fclean all
+
+.PHONY:         			all play frontend clean fclean re
